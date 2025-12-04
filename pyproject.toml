@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=65.0", "setuptools-scm>=7.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dns_benchmark"
+authors = [{ name="dns_benchmark authors"},]
+description = "A GitHub template for Python packages."
+dynamic = ["version"]
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+keywords = ["open source", "templates"]
+readme = "README.md"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Development Status :: 3 - Alpha",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click",
+    "dnspython",
+    "typer",
+    "rich",
+    "numpy"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "pylint",
+    "mypy",
+    "build",
+    "pytest",
+    "coverage[toml]",
+    "pytest-cov",
+    "furo",
+    "myst_nb",
+]
+
+[project.scripts]
+mycli = "dns_benchmark.cli:cli"
+
+[project.urls]
+"repository" = "https://github.com/scienxlab/python-package-template"
+
+[tool.setuptools_scm]
+# This section is empty but required for dynamic versioning.
+
+[tool.pytest.ini_options]
+# http://doc.pytest.org/en/latest/customize.html
+addopts = "--doctest-modules --ignore=docs --cov=dns_benchmark"
+
+[tool.coverage.run]
+# https://coverage.readthedocs.io/en/latest/config.html
+omit = [
+    "src/dns_benchmark/__init__.py",
+    "src/dns_benchmark/__main__.py",
+    "src/dns_benchmark/_version.py",
+]
