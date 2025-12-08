@@ -5,7 +5,6 @@ import typer
 
 from rich.console import Console
 from rich.live import Live
-from rich.table import Table
 
 console = Console()
 
@@ -25,15 +24,11 @@ def realtime(
         dns_benchmark benchmark realtime --domain=microsoft.com --domain=x.com 
     """
 
-    with Live(console=console, refresh_per_second=4) as live:
+    with Live(console=console, screen=True, auto_refresh=False, ) as live:
         for _ in range(20):
             # https://rich.readthedocs.io/en/latest/live.html
             # https://github.com/Textualize/rich/blob/master/examples/table_movie.py
 
-            data = benchmark(console=console, additional_domains=domain, N=2)
-            sorted_data = sorted(data, key=lambda data: data['mean'])
-
-            console.clear()
-            console.print(sorted_data)
-    
+            benchmark(console=live, additional_domains=domain, N=60)
+        exit(1)
     # return benchmark(console=console, additional_domains=domain)

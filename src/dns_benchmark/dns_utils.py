@@ -4,7 +4,18 @@ import numpy as np
 
 import dns.resolver
 
+from rich import box
 from rich.console import Console
+from rich.table import Table
+
+
+import enum
+class TimeUnit(enum.IntEnum):
+    s = 1e9
+    ms = 1e6
+    us = 1e3
+    ns = 1
+
 
 DOMAIN = [
     "google.com"
@@ -12,18 +23,10 @@ DOMAIN = [
 SERVER = [
     "8.8.8.8",
     "1.1.1.1",
+    "9.9.9.9",
     "default"
 ]
 def benchmark(console: Console,  additional_domains: list[str], N = 50) -> float:
-    """
-    My function makes square roots.
-
-    Args:
-        n: A number of some kind.
-
-    Returns:
-        The squarest root.
-    """
 
     all_domains_to_benchmark = DOMAIN + additional_domains
     # console.print(all_domains_to_benchmark)
@@ -56,23 +59,30 @@ def benchmark(console: Console,  additional_domains: list[str], N = 50) -> float
                     end = time.perf_counter_ns()
                 benchmark_bucket[server][host].append(end - start)
                 benchmark_server_bucket[server].append(end - start)
-        pass
-    data = humanize_server_bucket(benchmark_server_bucket, roundoff_decimals = 3)
-    return data
+        data = humanize_server_bucket(benchmark_server_bucket, )
 
-def humanize_server_bucket(server_bucket, roundoff_decimals = 5):
+        sorted_data = sorted(data, key=lambda data: data['mean'])
+
+        # console.clear()
+        # console.print(make_table(sorted_data))
+
+        console.update(make_table(sorted_data, unit = TimeUnit.us, roundoff=2), refresh=True)
+    return
+
+def humanize_server_bucket(server_bucket, ):
     server_bucket_npy = {server: np.array(latency) for server, latency in server_bucket.items() }
-    server_bucket_sec = {server: latency / 1e9 for server, latency in server_bucket_npy.items() }
+    # server_bucket_sec = {server: latency / 1e9 for server, latency in server_bucket_npy.items() }
+    server_bucket_sec = {server: latency for server, latency in server_bucket_npy.items() }
     server_bucket_sec_without_outliers = {server: reject_outliers(latency) for server, latency in server_bucket_sec.items() }
     return [ 
         {
             "server": server, 
-            "mean": np.round(latency.mean(), decimals=roundoff_decimals), 
-            "max": np.round(latency.max(), decimals=roundoff_decimals), 
-            "min": np.round(latency.min(), decimals=roundoff_decimals), 
-            "stddev": np.round(latency.std(), decimals=roundoff_decimals), 
-            "p99": np.round(np.percentile(latency, 99), decimals=roundoff_decimals),
-            "p95": np.round(np.percentile(latency, 95), decimals=roundoff_decimals),
+            "mean": latency.mean(), 
+            "max": latency.max(), 
+            "min": latency.min(), 
+            "stddev": latency.std(), 
+            "p99": np.percentile(latency, 99),
+            "p95": np.percentile(latency, 95),
         } for server, latency in server_bucket_sec_without_outliers.items() 
     ]
 
@@ -97,26 +107,26 @@ def reject_outliers(data, iqr=0.9):
 
     return iqr_data
 
-def make_table():
-    # # 3. Create the table
-    # table = Table(title="Sorted Users by Last Name")
-    # table.add_column("Server", style="cyan")
-    # table.add_column("Min", justify="right", style="green")
-    # table.add_column("Mean", style="magenta")
-    # table.add_column("Std Dev", style="magenta")
-    # table.add_column("Max", justify="left", style="green")
-    # table.add_column("P95", justify="left", style="green")
-    # table.add_column("P99", justify="left", style="green")
+def make_table(sorted_data, unit = TimeUnit.ms, roundoff = 5):
+    # 3. Create the table
+    table = Table(title=f"DNS Resolver Performance ({unit.name})",  box=box.SIMPLE)
+    table.add_column("Server")
+    table.add_column("Min")
+    table.add_column("Mean")
+    table.add_column("Std Dev")
+    table.add_column("Max")
+    table.add_column("P95")
+    table.add_column("P99")
 
-    # # 4. Add the *sorted* rows to the table
-    # for data in sorted_data:
-    #     table.add_row(
-    #         data["server"],
-    #         str(data["min"]),
-    #         str(data["mean"]),
-    #         str(data["stddev"]),
-    #         str(data["max"]),
-    #         str(data["p95"]),
-    #         str(data["p99"])
-    #     )
-    pass
+    # 4. Add the *sorted* rows to the table
+    for data in sorted_data:
+        table.add_row(
+            data["server"],
+            str(np.round(data["min"] / unit.value, decimals=roundoff)),
+            str(np.round(data["mean"] / unit.value, decimals=roundoff)),
+            str(np.round(data["stddev"] / unit.value, decimals=roundoff)),
+            str(np.round(data["max"] / unit.value, decimals=roundoff)),
+            str(np.round(data["p95"] / unit.value, decimals=roundoff)),
+            str(np.round(data["p99"] / unit.value, decimals=roundoff))
+        )
+    return table
