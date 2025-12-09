@@ -24,15 +24,15 @@ SERVER = [
     "8.8.8.8",
     "1.1.1.1",
     "9.9.9.9",
-    "default"
+    "default",
+    "103.154.234.109"
 ]
-def benchmark(console: Console,  additional_domains: list[str], N = 50) -> float:
+def benchmark(console: Console,  additional_domains: list[str], N = 50, time_unit = "ms") -> float:
 
     all_domains_to_benchmark = DOMAIN + additional_domains
-    # console.print(all_domains_to_benchmark)
-
     all_servers_to_benchmark = SERVER
-    # console.print(all_domains_to_benchmark)
+
+    time_unit = TimeUnit[time_unit] if type(time_unit) is str else time_unit
 
     benchmark_bucket = {}
     benchmark_server_bucket = {}
@@ -63,11 +63,8 @@ def benchmark(console: Console,  additional_domains: list[str], N = 50) -> float
 
         sorted_data = sorted(data, key=lambda data: data['mean'])
 
-        # console.clear()
-        # console.print(make_table(sorted_data))
-
-        console.update(make_table(sorted_data, unit = TimeUnit.us, roundoff=2), refresh=True)
-    return
+        console.update(make_table(sorted_data, entries = f" ( {i+1} / {N} ) ", unit = time_unit, roundoff=2), refresh=True)
+    return benchmark_server_bucket
 
 def humanize_server_bucket(server_bucket, ):
     server_bucket_npy = {server: np.array(latency) for server, latency in server_bucket.items() }
@@ -83,7 +80,8 @@ def humanize_server_bucket(server_bucket, ):
             "stddev": latency.std(), 
             "p99": np.percentile(latency, 99),
             "p95": np.percentile(latency, 95),
-        } for server, latency in server_bucket_sec_without_outliers.items() 
+            "outliers": len(outliers),
+        } for server, (outliers, latency) in server_bucket_sec_without_outliers.items() 
     ]
 
 def reject_outliers(data, iqr=0.9):
@@ -105,18 +103,20 @@ def reject_outliers(data, iqr=0.9):
     outliers = data[(data < lower_bound) | (data > upper_bound)]
     iqr_data = data[(data > lower_bound) & (data < upper_bound)]
 
-    return iqr_data
+    return outliers, iqr_data
 
-def make_table(sorted_data, unit = TimeUnit.ms, roundoff = 5):
+def make_table(sorted_data, entries = None, unit = TimeUnit.ms, roundoff = 5):
+    entries = entries if entries else ""
     # 3. Create the table
-    table = Table(title=f"DNS Resolver Performance ({unit.name})",  box=box.SIMPLE)
+    table = Table(title=f"DNS Resolver Performance {entries}",  box=box.SIMPLE)
     table.add_column("Server")
-    table.add_column("Min")
-    table.add_column("Mean")
+    table.add_column(f"Min ({unit.name})")
+    table.add_column(f"Mean ({unit.name})")
     table.add_column("Std Dev")
-    table.add_column("Max")
+    table.add_column(f"Max ({unit.name})")
     table.add_column("P95")
     table.add_column("P99")
+    table.add_column("Outliers")
 
     # 4. Add the *sorted* rows to the table
     for data in sorted_data:
@@ -127,6 +127,7 @@ def make_table(sorted_data, unit = TimeUnit.ms, roundoff = 5):
             str(np.round(data["stddev"] / unit.value, decimals=roundoff)),
             str(np.round(data["max"] / unit.value, decimals=roundoff)),
             str(np.round(data["p95"] / unit.value, decimals=roundoff)),
-            str(np.round(data["p99"] / unit.value, decimals=roundoff))
+            str(np.round(data["p99"] / unit.value, decimals=roundoff)),
+            str(data["outliers"]),
         )
     return table
