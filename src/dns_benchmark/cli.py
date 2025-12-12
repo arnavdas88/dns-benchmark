@@ -19,11 +19,12 @@ app.add_typer(benchmark, name = "benchmark")
 from . import dns_utils
 
 TimeUnitKeys = [k.name for k in dns_utils.TimeUnit]
-TimeUnitLiteral = Literal[*TimeUnitKeys]
+# TimeUnitLiteral = Literal[*TimeUnitKeys]
 
 @benchmark.command()
 def server(
     domain: Annotated[List[str], typer.Option(default_factory=list)],
+    server: Annotated[List[str], typer.Option(default_factory=list)],
     samples: int = typer.Option(default=50),
     time_unit: Literal["s", "ms", "us", "ns"] = typer.Option(default="ms"),
     export: Annotated[Optional[Path], typer.Option(exists=True, file_okay=True, dir_okay=False, writable=True)] = None,
@@ -53,7 +54,7 @@ def server(
         # https://rich.readthedocs.io/en/latest/live.html
         # https://github.com/Textualize/rich/blob/master/examples/table_movie.py
 
-        data = dns_utils.benchmark(console=live, additional_domains=domain, N=samples, time_unit=time_unit)
+        data = dns_utils.benchmark(console=live, additional_domains=domain, additional_servers=server, N=samples, time_unit=time_unit)
 
     if export:
         with open(export, "w") as file:

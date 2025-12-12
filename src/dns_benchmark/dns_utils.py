@@ -25,12 +25,12 @@ SERVER = [
     "1.1.1.1",
     "9.9.9.9",
     "default",
-    "103.154.234.109"
+    # "103.154.234.109"
 ]
-def benchmark(console: Console,  additional_domains: list[str], N = 50, time_unit = "ms") -> float:
+def benchmark(console: Console,  additional_domains: list[str], additional_servers: list[str], N = 50, time_unit = "ms") -> float:
 
     all_domains_to_benchmark = DOMAIN + additional_domains
-    all_servers_to_benchmark = SERVER
+    all_servers_to_benchmark = SERVER + additional_servers
 
     time_unit = TimeUnit[time_unit] if type(time_unit) is str else time_unit
 
