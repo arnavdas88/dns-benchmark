@@ -79,12 +79,12 @@ def humanize_server_bucket(server_bucket, ):
     return [ 
         {
             "server": server, 
-            "mean": latency.mean(), 
-            "max": latency.max(), 
-            "min": latency.min(), 
-            "stddev": latency.std(), 
-            "p99": np.percentile(latency, 99),
-            "p95": np.percentile(latency, 95),
+            "mean": latency.mean() if len(latency) else 0, 
+            "max": latency.max() if len(latency) else 0, 
+            "min": latency.min() if len(latency) else 0, 
+            "stddev": latency.std() if len(latency) else 0, 
+            "p99": np.percentile(latency, 99) if len(latency) else 0,
+            "p95": np.percentile(latency, 95) if len(latency) else 0,
             "outliers": len(outliers),
             "errors": len(nan_data[nan_data])
         } for server, (outliers, latency, nan_data) in server_bucket_sec_without_outliers.items() 
