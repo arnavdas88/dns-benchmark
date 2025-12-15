@@ -27,7 +27,7 @@ def server(
     server: Annotated[List[str], typer.Option(default_factory=list)],
     samples: int = typer.Option(default=50),
     time_unit: Literal["s", "ms", "us", "ns"] = typer.Option(default="ms"),
-    export: Annotated[Optional[Path], typer.Option(exists=True, file_okay=True, dir_okay=False, writable=True)] = None,
+    export: Annotated[Optional[Path], typer.Option()] = None,
 ):
     """
     Test square rootiness. Call from the command line with:
@@ -54,11 +54,16 @@ def server(
         # https://rich.readthedocs.io/en/latest/live.html
         # https://github.com/Textualize/rich/blob/master/examples/table_movie.py
 
-        data = dns_utils.benchmark(console=live, additional_domains=domain, additional_servers=server, N=samples, time_unit=time_unit)
+        data, table = dns_utils.benchmark(console=live, additional_domains=domain, additional_servers=server, N=samples, time_unit=time_unit)
 
     if export:
-        with open(export, "w") as file:
-            json.dump(data, file)
+        if export.name.endswith(".json"):
+            with open(export, "w") as file:
+                json.dump(data, file)
+        elif export.name.endswith(".txt"):
+            with open(export, "w") as file:
+                _export_console = Console(file=file)
+                _export_console.print(table)
 
 @benchmark.command()
 def domain():

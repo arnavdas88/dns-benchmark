@@ -11,9 +11,14 @@
             "module": "dns_benchmark",
             "args": [
                 "benchmark",
-                "realtime",
+                "server",
                 "--domain=microsoft.com",
-                "--domain=x.com"
+                "--domain=x.com",
+                "--server=8.8.4.4",
+                "--samples=50",
+                "--time-unit=ms",
+                // "--export=C:\\Users\\iifon\\AppData\\Local\\Temp\\dns_benchmark\\export_result.json"
+                "--export=C:\\Users\\iifon\\AppData\\Local\\Temp\\dns_benchmark\\export_result.txt"
             ],
             "justMyCode": false
         }
